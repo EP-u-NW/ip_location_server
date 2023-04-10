@@ -1,0 +1,85 @@
+syntax = "proto3";
+package ip_location_server;
+option java_package = "de.ep_u_nw.ip_location_server.grpc.generated";
+option java_multiple_files = true;
+import "google/protobuf/empty.proto";
+
+// Exceptions are with respect to https://grpc.github.io/grpc-java/javadoc/io/grpc/Status.html
+service IPLocationService{
+
+	// Looks up information about the peer that made the request.
+	// Throws INVALID_ARGUMENT if GRPC_ME_USE_HEADER is enabled, but GRPC_ME_HEADER_NAME did not contain a valid IPv4 or IPv6.
+	// Throws UNIMPLEMENTED if the supplied IP is IPv? but IPv? lookup is not enabled in the configuration. Here, ? is placeholder for either 4 or 6.
+	// Throws INTERNAL on internal failures.
+    rpc Me(google.protobuf.Empty) returns (LookupResult){}
+	
+	// Looks up information about the supplied IP.
+	// Throws INVALID_ARGUMENT if the supplied IP was not a valid IPv4 or IPv6.
+	// Throws UNIMPLEMENTED if the supplied IP is IPv? but IPv? lookup is not enabled in the configuration. Here, ? is placeholder for either 4 or 6.
+	// Throws INTERNAL on internal failures.
+	rpc Lookup(IP) returns (LookupResult) {}
+}
+
+
+message IP{
+	oneof representation {
+		IPBinary ip_binary=1;
+		// String containing an IPv4 or IPv6 string literal, e.g. "192.168.0.1" or "2001:db8::1"
+		string ip_string=2;
+	}
+}
+
+message IPBinary {
+	oneof ip_version {
+		IPv4Binary v4=1;
+		IPv6Binary v6=2;
+	}
+}
+
+// The binary representation of a IPv4.
+// All entries must be between 0 and 255, keep that in mind if 
+// you are using a language without unsigned datatypes like Java!
+message IPv4Binary {
+	// For the address "81.169.207.220" this would be 81
+	uint32 b01=1;
+	// For the address "81.169.207.220" this would be 169
+	uint32 b02=2;
+	// For the address "81.169.207.220" this would be 207
+	uint32 b03=3;
+	// For the address "81.169.207.220" this would be 220
+	uint32 b04=4;
+}
+
+// The binary representation of a IPv6.
+// All entries must be between 0 and 255, keep that in mind if 
+// you are using a language without unsigned datatypes like Java!
+message IPv6Binary {
+	uint32 b01=1;
+	uint32 b02=2;
+	uint32 b03=3;
+	uint32 b04=4;
+	uint32 b05=5;
+	uint32 b06=6;
+	uint32 b07=7;
+	uint32 b08=8;
+	uint32 b09=9;
+	uint32 b10=10;
+	uint32 b11=11;
+	uint32 b12=12;
+	uint32 b13=13;
+	uint32 b14=14;
+	uint32 b15=15;
+	uint32 b16=16;	
+}
+
+message LookupResult {
+	// Whether the IP is a IPv6 (true) or IPv4 (false) 
+	bool is_v6=1;
+	// The ip as string, e.g. "79.217.41.103" or "2001:db8:3333:4444:5555:6666:7777:8888"
+	string ip_string=2;
+	// The <LOCATION INFORMATION> as defined in README.md or an empty string, if 
+	// no information about the requested IP address could be found in the dataset. 
+	// This usually happens for special IP addresses like 127.0.0.1 (which is the
+	// localhost loopback address) or addresss from the private network block 192.168.0.0.
+	string info=3;
+}

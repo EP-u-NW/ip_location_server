@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ip-location-server
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ip-location-server
+  template:
+    metadata:
+      labels:
+        app: ip-location-server
+    spec:
+      containers:
+      - name: ip-location-server
+        image: ip_location_server:latest
+        env:
+        - name: HTTP_ME_USE_HEADER
+          valueFrom:
+            configMapKeyRef:
+              name: ip-location-server-configmap
+              key: http-me-use-header
+        - name: GRPC_ME_USE_HEADER
+          valueFrom:
+            configMapKeyRef:
+              name: ip-location-server-configmap
+              key: grpc-me-use-header
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ip-location-server-service
+  namespace: production
+spec:
+  selector:
+    app: ip-location-server
+  ports:
+  - name: http-endpoint
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  - name: grpc-endpoint
+    protocol: TCP
+    port: 8081
+    targetPort: 8081
+  type: ClusterIP

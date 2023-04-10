@@ -1,0 +1,56 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ip-location-server-ingress-grpc
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/issuer: "letsencrypt-prod"   
+    #GRPC things
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC" 
+    # Timeout for response streaming
+    nginx.ingress.kubernetes.io/grpc_read_timeout: "60s"
+    # Timeout for request streaming
+    nginx.ingress.kubernetes.io/grpc_send_timeout: "60s"
+    nginx.ingress.kubernetes.io/client_body_timeout: "60s"
+spec:
+  tls:
+  - hosts:
+    - location.ep-u-nw.de
+    secretName: ip-location-server-tls
+  rules:
+  - host: location.ep-u-nw.de
+    http:
+      paths:
+      - path: /ip_location_server.IPLocationService
+        pathType: Prefix
+        backend:
+          service:
+            name: ip-location-server-service
+            port: 
+              number: 8081
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ip-location-server-ingress-http
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/issuer: "letsencrypt-prod"   
+spec:
+  tls:
+  - hosts:
+    - location.ep-u-nw.de
+    secretName: ip-location-server-tls
+  rules:
+  - host: location.ep-u-nw.de
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ip-location-server-service
+            port: 
+              number: 80
